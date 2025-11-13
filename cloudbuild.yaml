@@ -30,11 +30,6 @@
         echo "Checking predict/ directory before running script..."
         ls -R predict/
 
-# Optional caching for pip
-options:
-  cache:
-    paths:
-      - '/root/.cache/pip/**/*'
 
 # Step 4: Store artifacts in GCS bucket
 artifacts:
@@ -45,4 +40,7 @@ artifacts:
       - 'annotation-pipeline/predict/*'
       - 'annotation-pipeline/inspection.csv'
 options:
+  cache:
+    paths:
+      - '/root/.cache/pip/**/*'
   logging: CLOUD_LOGGING_ONLY
