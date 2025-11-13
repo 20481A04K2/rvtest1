@@ -1,0 +1,48 @@
+  steps:
+  # Step 1: Wait for 5 minutes
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Waiting for 5 minutes before running the build phase..."
+        sleep 300
+
+  # Step 2: Install ffmpeg, dependencies, and run annotation script
+  - name: 'python:3.8'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        cd annotation-pipeline
+        apt-get update -y
+        apt-get install -y ffmpeg || echo "ffmpeg installation skipped"
+        pip install -r requirements.txt
+        python3 annotations.py
+
+  # Step 3: Post-build - check directories
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        cd annotation-pipeline
+        echo "Checking predict/ directory before running script..."
+        ls -R predict/
+
+# Optional caching for pip
+options:
+  cache:
+    paths:
+      - '/root/.cache/pip/**/*'
+
+# Step 4: Store artifacts in GCS bucket
+artifacts:
+  objects:
+    location: 'gs://YOUR_BUCKET_NAME/artifacts/'
+    paths:
+      - 'annotation-pipeline/frames/*'
+      - 'annotation-pipeline/predict/*'
+      - 'annotation-pipeline/inspection.csv'
+options:
+  logging: CLOUD_LOGGING_ONLY
