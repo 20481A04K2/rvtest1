@@ -34,7 +34,7 @@
 # Step 4: Store artifacts in GCS bucket
 artifacts:
   objects:
-    location: 'gs://YOUR_BUCKET_NAME/artifacts/'
+    location: 'gs://annotations123/artifacts/'
     paths:
       - 'annotation-pipeline/frames/*'
       - 'annotation-pipeline/predict/*'
