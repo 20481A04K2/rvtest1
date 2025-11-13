@@ -1,11 +1,11 @@
 steps:
-  # Step 1: Wait for 5 minutes
+  # Step 1: Wait before build
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        echo "Waiting for 5 minutes before running the build phase..."
+        echo "Waiting before running the build phase..."
         sleep 10
 
   # Step 2: Install ffmpeg, dependencies, and run annotation script
@@ -16,21 +16,47 @@ steps:
       - |
         cd annotation-pipeline
         apt-get update -y
-        apt-get install -y ffmpeg libsm6 libxext6 libxrender-dev libgomp1 -qq || echo "Package installation completed with warnings"
+        apt-get install -y ffmpeg libsm6 libxext6 libxrender-dev libgomp1 -qq || echo "Package installation completed"
         pip install -r requirements.txt
         python3 annotations.py
 
-  # Step 3: Post-build - check directories
+  # Step 3: Check and upload artifacts manually
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
         cd annotation-pipeline
-        echo "Checking predict/ directory..."
-        ls -R predict/ || echo "predict/ directory is empty"
-        echo "Checking frames/ directory..."
-        ls -R frames/ || echo "frames/ directory is empty"
+        
+        echo "=== Directory Contents ==="
+        echo "Frames directory:"
+        ls -lah frames/ || echo "Empty"
+        echo ""
+        echo "Predict directory:"
+        ls -lah predict/ || echo "Empty"
+        echo ""
+        
+        # Upload files if they exist
+        if [ -f "inspection.csv" ]; then
+          echo "Uploading inspection.csv..."
+          gsutil cp inspection.csv gs://annotations123/artifacts/${BUILD_ID}/
+        fi
+        
+        if [ "$(ls -A frames 2>/dev/null)" ]; then
+          echo "Uploading frames..."
+          gsutil -m cp -r frames/* gs://annotations123/artifacts/${BUILD_ID}/frames/
+        else
+          echo "No frames to upload"
+        fi
+        
+        if [ "$(ls -A predict 2>/dev/null)" ]; then
+          echo "Uploading predictions..."
+          gsutil -m cp -r predict/* gs://annotations123/artifacts/${BUILD_ID}/predict/
+        else
+          echo "No predictions to upload"
+        fi
+        
+        echo "Artifact upload completed!"
 
 # Timeout for the build
 timeout: '1800s'
@@ -40,11 +66,3 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 
-# Step 4: Store artifacts in GCS bucket
-artifacts:
-  objects:
-    location: 'gs://annotations123/artifacts/${BUILD_ID}/'
-    paths:
-      - 'annotation-pipeline/frames/*'
-      - 'annotation-pipeline/predict/*'
-      - 'annotation-pipeline/inspection.csv'
