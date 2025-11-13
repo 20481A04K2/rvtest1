@@ -45,6 +45,6 @@ artifacts:
   objects:
     location: 'gs://annotations123/artifacts/${BUILD_ID}/'
     paths:
-      - 'annotation-pipeline/frames/**'
-      - 'annotation-pipeline/predict/**'
+      - 'annotation-pipeline/frames/*'
+      - 'annotation-pipeline/predict/*'
       - 'annotation-pipeline/inspection.csv'
