@@ -6,7 +6,7 @@ steps:
       - '-c'
       - |
         echo "Waiting for 5 minutes before running the build phase..."
-        sleep 300
+        sleep 10
 
   # Step 2: Install ffmpeg, dependencies, and run annotation script
   - name: 'python:3.8'
